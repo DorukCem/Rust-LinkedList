@@ -45,6 +45,12 @@ impl<T> LinkedList<T> {
             next: self.head.as_deref(),
         }
     }
+
+    fn iter_mut(&mut self) -> ListIterMut<T> {
+        ListIterMut {
+            next: self.head.as_deref_mut()
+        }
+    }
 }
 
 impl<T> Drop for LinkedList<T> {
@@ -80,6 +86,21 @@ impl<'a, T> Iterator for ListIter<'a, T> {
     }
 }
 
+struct ListIterMut<'a, T> {
+    next: Option<&'a mut ListNode<T>>
+}
+
+impl<'a, T> Iterator for ListIterMut<'a, T> {
+    type Item = &'a mut T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next.take().map(|node| { 
+            self.next = node.next.as_deref_mut();
+            &mut node.value
+        })
+    }
+}
+
 /*
     iter() iterates over the items by reference
     iter_mut() iterates over the items, giving a mutable reference to each item
@@ -94,7 +115,8 @@ fn main() {
     list.push_left(1_i32);
     list.push_left(29_i32);
 
-    for item in list.iter() {
+    for item in list.iter_mut() {
+        *item += 3;
         println!("{}", item);
     }
 }
