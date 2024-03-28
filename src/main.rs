@@ -1,4 +1,3 @@
-
 struct ListNode<T> {
     value: T,
     next: Option<Box<ListNode<T>>>,
@@ -9,7 +8,7 @@ struct LinkedList<T> {
 }
 
 impl<T> LinkedList<T> {
-    fn new() -> LinkedList<T> {
+    fn new() -> Self {
         LinkedList { head: Option::None }
     }
 
@@ -28,6 +27,24 @@ impl<T> LinkedList<T> {
             node.value
         })
     }
+
+    fn peek(&self) -> Option<&T> {
+        self.head.as_ref().map(|node| &node.value)
+    }
+
+    fn peek_mut(&mut self) -> Option<&mut T> {
+        self.head.as_mut().map(|node| &mut node.value)
+    }
+
+    fn into_iter(self) -> ListIntoIter<T> {
+        ListIntoIter(self)
+    }
+
+    fn iter(&self) -> ListIter<T> {
+        ListIter {
+            next: self.head.as_deref(),
+        }
+    }
 }
 
 impl<T> Drop for LinkedList<T> {
@@ -39,14 +56,45 @@ impl<T> Drop for LinkedList<T> {
     }
 }
 
+struct ListIntoIter<T>(LinkedList<T>);
+
+impl<T> Iterator for ListIntoIter<T> {
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.pop_left()
+    }
+}
+
+struct ListIter<'a, T> {
+    next: Option<&'a ListNode<T>>,
+}
+
+impl<'a, T> Iterator for ListIter<'a, T> {
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> { 
+        self.next.map(|node| { // The closure captures a copy of the node
+            self.next = node.next.as_deref();
+            &node.value
+        })
+    }
+}
+
+/*
+    iter() iterates over the items by reference
+    iter_mut() iterates over the items, giving a mutable reference to each item
+    into_iter() iterates over the items, transfers ownership of the items to whoever uses the iterator.
+
+    If you just need to look at the data, use iter, if you need to edit/mutate it, use iter_mut, and if you need to give it a new owner, use into_iter.
+*/
+
 fn main() {
     let mut list = LinkedList::new();
     list.push_left(32_i32);
     list.push_left(1_i32);
     list.push_left(29_i32);
 
-    while let Some(x) = list.pop_left() {
-        println!("{x}");
+    for item in list.iter() {
+        println!("{}", item);
     }
-
 }
